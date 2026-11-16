@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>OrderFlow — B2B Order Management</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;min-height:100vh;background:#f0f4ff;
+  background-image:
+    radial-gradient(ellipse at 15% 20%,rgba(167,139,250,.32) 0%,transparent 55%),
+    radial-gradient(ellipse at 85% 10%,rgba(96,165,250,.28) 0%,transparent 50%),
+    radial-gradient(ellipse at 50% 80%,rgba(52,211,153,.22) 0%,transparent 55%),
+    radial-gradient(ellipse at 90% 85%,rgba(251,191,36,.18) 0%,transparent 45%),
+    radial-gradient(ellipse at 5% 90%,rgba(244,114,182,.18) 0%,transparent 45%);
+  background-attachment:fixed}
+.glass{background:rgba(255,255,255,.62);backdrop-filter:blur(14px) saturate(180%);-webkit-backdrop-filter:blur(14px) saturate(180%);border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 32px rgba(99,102,241,.10),0 1.5px 8px rgba(99,102,241,.06)}
+.glass-card{background:rgba(255,255,255,.55);backdrop-filter:blur(18px) saturate(170%);-webkit-backdrop-filter:blur(18px) saturate(170%);border:1px solid rgba(255,255,255,.72);box-shadow:0 6px 28px rgba(99,102,241,.09);transition:box-shadow .25s,transform .25s}
+.glass-card:hover{box-shadow:0 12px 40px rgba(99,102,241,.16);transform:translateY(-2px)}
+.glass-input{background:rgba(255,255,255,.70);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.80);box-shadow:inset 0 1px 4px rgba(99,102,241,.06);transition:border-color .2s,box-shadow .2s}
+.glass-input:focus{outline:none;border-color:rgba(99,102,241,.5);box-shadow:0 0 0 3px rgba(99,102,241,.12),inset 0 1px 4px rgba(99,102,241,.06)}
+.glass-btn{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:all .2s ease}
+.glass-btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
+.glass-btn:active{transform:translateY(0)}
+.modal-overlay{background:rgba(15,23,42,.38);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.modal-box{background:rgba(255,255,255,.90);backdrop-filter:blur(24px) saturate(200%);-webkit-backdrop-filter:blur(24px) saturate(200%);border:1px solid rgba(255,255,255,.92);box-shadow:0 24px 80px rgba(99,102,241,.18)}
+.login-card{background:rgba(255,255,255,.75);backdrop-filter:blur(28px) saturate(200%);-webkit-backdrop-filter:blur(28px) saturate(200%);border:1px solid rgba(255,255,255,.85);box-shadow:0 32px 100px rgba(99,102,241,.18),0 4px 24px rgba(99,102,241,.10)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:9999px;font-size:.72rem;font-weight:600;letter-spacing:.02em}
+.b-pending  {background:rgba(251,191,36,.18); color:#b45309;border:1px solid rgba(251,191,36,.4)}
+.b-confirmed{background:rgba(99,102,241,.14); color:#4338ca;border:1px solid rgba(99,102,241,.35)}
+.b-delivered{background:rgba(52,211,153,.18); color:#065f46;border:1px solid rgba(52,211,153,.4)}
+.b-returned {background:rgba(244,114,182,.18);color:#9d174d;border:1px solid rgba(244,114,182,.4)}
+.b-rejected {background:rgba(239,68,68,.14);  color:#991b1b;border:1px solid rgba(239,68,68,.35)}
+.b-earned   {background:rgba(251,191,36,.18); color:#b45309;border:1px solid rgba(251,191,36,.4)}
+.b-settled  {background:rgba(52,211,153,.18); color:#065f46;border:1px solid rgba(52,211,153,.4)}
+.b-none     {background:rgba(148,163,184,.14);color:#64748b;border:1px solid rgba(148,163,184,.3)}
+.b-adv-paid {background:rgba(52,211,153,.18); color:#065f46;border:1px solid rgba(52,211,153,.4)}
+.b-adv-unpaid{background:rgba(239,68,68,.14); color:#991b1b;border:1px solid rgba(239,68,68,.35)}
+.b-rcvd     {background:rgba(52,211,153,.18); color:#065f46;border:1px solid rgba(52,211,153,.4)}
+.b-not-rcvd {background:rgba(239,68,68,.14);  color:#991b1b;border:1px solid rgba(239,68,68,.35)}
+.gt-wrap{overflow-x:auto;border-radius:1rem;box-shadow:0 8px 32px rgba(99,102,241,.09)}
+.gt thead tr{background:rgba(99,102,241,.08);border-bottom:1px solid rgba(99,102,241,.13)}
+.gt th{font-size:.70rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#6366f1;padding:11px 13px;white-space:nowrap}
+.gt tbody tr{border-bottom:1px solid rgba(99,102,241,.07);transition:background .18s}
+.gt tbody tr:hover{background:rgba(99,102,241,.04)}
+.gt td{padding:11px 13px;font-size:.82rem;color:#1e1b4b;vertical-align:middle}
+.role-toggle{display:flex;align-items:center;background:rgba(99,102,241,.10);border:1px solid rgba(99,102,241,.22);border-radius:9999px;padding:3px}
+.role-btn{padding:6px 18px;border-radius:9999px;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s;border:none;outline:none;background:transparent;color:#6366f1}
+.role-btn.active{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;box-shadow:0 4px 14px rgba(99,102,241,.35)}
+.ab{padding:4px 9px;border-radius:6px;font-size:.73rem;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .18s;display:inline-flex;align-items:center;gap:3px}
+.ab:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.sa-t{background:linear-gradient(135deg,rgba(99,102,241,.18),rgba(139,92,246,.12))}
+.sa-p{background:linear-gradient(135deg,rgba(251,191,36,.18),rgba(245,158,11,.10))}
+.sa-c{background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(59,130,246,.10))}
+.sa-d{background:linear-gradient(135deg,rgba(52,211,153,.18),rgba(16,185,129,.10))}
+.sa-r{background:linear-gradient(135deg,rgba(244,114,182,.18),rgba(239,68,68,.10))}
+.sa-e{background:linear-gradient(135deg,rgba(251,191,36,.20),rgba(245,158,11,.14))}
+.sa-s{background:linear-gradient(135deg,rgba(52,211,153,.22),rgba(16,185,129,.14))}
+#toast-c{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 20px;border-radius:12px;font-size:.84rem;font-weight:600;color:#fff;min-width:220px;backdrop-filter:blur(12px);animation:fiu .3s ease both;box-shadow:0 6px 24px rgba(0,0,0,.15)}
+.t-ok {background:linear-gradient(135deg,#10b981,#059669)}
+.t-err{background:linear-gradient(135deg,#ef4444,#dc2626)}
+.t-inf{background:linear-gradient(135deg,#6366f1,#8b5cf6)}
+.t-wrn{background:linear-gradient(135deg,#f59e0b,#d97706)}
+@keyframes fiu{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fi {from{opacity:0}to{opacity:1}}
+.afu{animation:fiu .35s ease both}
+.af {animation:fi  .20s ease both}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:rgba(255,255,255,.30);border-radius:3px}
+::-webkit-scrollbar-thumb{background:rgba(99,102,241,.35);border-radius:3px}
+.form-label{display:block;font-size:.74rem;font-weight:600;color:#6366f1;margin-bottom:4px;letter-spacing:.02em}
+.sec-title{font-size:.70rem;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:.10em;margin-bottom:10px}
+.info-box{background:rgba(99,102,241,.07);border:1px dashed rgba(99,102,241,.25);border-radius:10px;padding:8px 14px;font-size:.76rem;color:#6366f1}
+.empty-state{text-align:center;padding:48px 20px;color:#a5b4fc}
+@media(max-width:640px){.gt th,.gt td{padding:9px 10px}}
+</style>
+</head>
+<body class="min-h-screen">
+<div id="toast-c"></div>
+
+<!-- LOGIN -->
+<div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
+  <div class="login-card rounded-3xl p-8 w-full max-w-sm afu">
+    <div class="text-center mb-7">
+      <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-xl mx-auto mb-4">
+        <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+      </div>
+      <h1 class="text-2xl text-indigo-900" style="font-weight:800">OrderFlow</h1>
+      <p class="text-xs text-indigo-400 mt-1">B2B Order Management System</p>
+    </div>
+    <div class="role-toggle mb-5 w-full">
+      <button class="role-btn active flex-1 text-center" id="loginBtnR" onclick="loginRoleSelect('reseller')">🏪 Reseller</button>
+      <button class="role-btn flex-1 text-center"        id="loginBtnS" onclick="loginRoleSelect('supplier')">🏭 Supplier</button>
+    </div>
+    <div class="space-y-4">
+      <div>
+        <label class="form-label">Password</label>
+        <div class="relative">
+          <input id="loginPass" type="password" placeholder="পাসওয়ার্ড দিন"
+            class="glass-input w-full px-4 py-2.5 rounded-xl text-sm text-indigo-900 pr-10"
+            onkeydown="if(event.key==='Enter')doLogin()"/>
+          <button type="button" onclick="togglePwdVis('loginPass',this)"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-indigo-300 hover:text-indigo-500 text-xs select-none">👁</button>
+        </div>
+      </div>
+      <button onclick="doLogin()"
+        class="glass-btn w-full py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-violet-600 shadow-lg">
+        Login →
+      </button>
+      <p id="loginErr" class="text-xs text-rose-500 text-center hidden">❌ ভুল পাসওয়ার্ড! আবার চেষ্টা করুন।</p>
+    </div>
+    <div class="mt-5 p-3 rounded-xl bg-indigo-50 border border-indigo-100 text-xs text-indigo-500 space-y-1">
+      <p>🏪 Reseller default: <code class="bg-white px-1 rounded font-mono">reseller123</code></p>
+      <p>🏭 Supplier default: <code class="bg-white px-1 rounded font-mono">supplier123</code></p>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="main-app" class="hidden min-h-screen px-3 py-6 md:px-6 md:py-8 max-w-screen-xl mx-auto">
+
+  <!-- Header -->
+  <header class="glass rounded-2xl px-5 py-4 mb-6 flex flex-wrap items-center justify-between gap-4 afu">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg">
+        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-lg text-indigo-900 leading-tight" style="font-weight:800">OrderFlow</h1>
+        <p class="text-xs text-indigo-400 font-medium" id="headerRoleTag">B2B Panel</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 flex-wrap">
+      <span id="headerRoleBadge" class="badge b-confirmed">🏪 Reseller</span>
+      <button id="addOrderBtn" class="glass-btn bg-gradient-to-r from-indigo-500 to-violet-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-lg flex items-center gap-2" onclick="openAddModal()">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>New Order
+      </button>
+      <button onclick="openChangePwd()" class="ab bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100 px-3 py-2">🔑 Password</button>
+      <button onclick="doLogout()" class="ab bg-rose-50 text-rose-500 border-rose-200 hover:bg-rose-100 px-3 py-2">🚪 Logout</button>
+    </div>
+  </header>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-5" id="statsGrid"></div>
+
+  <!-- Earnings Panel -->
+  <div id="earningsPanel" class="glass rounded-2xl px-5 py-4 mb-5 hidden">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">💰</span>
+        <div>
+          <p class="text-xs font-semibold text-indigo-500 uppercase tracking-wider">Earnings Balance</p>
+          <p class="text-xs text-indigo-300">ডেলিভার হওয়া অর্ডার থেকে স্বয়ংক্রিয় হিসাব</p>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-5">
+        <div class="text-center">
+          <p class="text-xs text-amber-600 font-semibold mb-0.5">⏳ Pending</p>
+          <p class="text-xl text-amber-700" style="font-weight:800" id="pendingEarnings">৳0.00</p>
+          <p class="text-xs text-amber-400">Settle হয়নি</p>
+        </div>
+        <div class="w-px bg-indigo-100 self-stretch hidden sm:block"></div>
+        <div class="text-center">
+          <p class="text-xs text-emerald-600 font-semibold mb-0.5">✅ Settled</p>
+          <p class="text-xl text-emerald-700" style="font-weight:800" id="settledEarnings">৳0.00</p>
+          <p class="text-xs text-emerald-400">পেইড</p>
+        </div>
+        <div class="w-px bg-indigo-100 self-stretch hidden sm:block"></div>
+        <div class="text-center">
+          <p class="text-xs text-indigo-600 font-semibold mb-0.5">📊 মোট লাভ</p>
+          <p class="text-xl text-indigo-700" style="font-weight:800" id="totalEarned">৳0.00</p>
+          <p class="text-xs text-indigo-300">সব মিলিয়ে</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter -->
+  <div class="glass rounded-2xl px-4 py-3 mb-5 flex flex-wrap gap-3 items-center">
+    <div class="flex-1 min-w-[180px] relative">
+      <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+      </svg>
+      <input id="searchInput" type="text" placeholder="Order ID / নাম / ফোন…" class="glass-input w-full pl-9 pr-3 py-2 rounded-xl text-sm text-indigo-900" oninput="renderTable()"/>
+    </div>
+    <select id="statusFilter" class="glass-input px-3 py-2 rounded-xl text-sm text-indigo-900 font-medium cursor-pointer" onchange="renderTable()">
+      <option value="">All Status</option>
+      <option value="Pending">⏳ Pending</option>
+      <option value="Confirmed">✅ Confirmed</option>
+      <option value="Delivered">📬 Delivered</option>
+      <option value="Returned">↩️ Returned</option>
+      <option value="Rejected">❌ Rejected</option>
+    </select>
+    <select id="payFilter" class="glass-input px-3 py-2 rounded-xl text-sm text-indigo-900 font-medium cursor-pointer" onchange="renderTable()">
+      <option value="">All Payment</option>
+      <option value="earned">⏳ Pending Earn</option>
+      <option value="settled">✅ Settled</option>
+    </select>
+    <button onclick="clearFilters()" class="ab bg-indigo-50 text-indigo-500 border-indigo-200 hover:bg-indigo-100 px-4 py-2 text-xs">✕ Clear</button>
+    <span id="resultCount" class="text-xs text-indigo-400 font-medium ml-auto"></span>
+  </div>
+
+  <!-- Table -->
+  <div class="glass rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+      <h2 class="text-sm text-indigo-800" style="font-weight:700" id="tableTitle">অর্ডার তালিকা</h2>
+      <div id="supplierNote" class="hidden info-box text-xs">🏭 আপনি শুধু <strong>Confirm/Delivered</strong> ও পেমেন্ট রিসিভ কনফার্ম করতে পারবেন।</div>
+    </div>
+    <div class="gt-wrap">
+      <table class="gt w-full border-collapse">
+        <thead><tr id="tableHead"></tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div id="emptyState" class="empty-state hidden">
+        <div class="text-4xl mb-3">📦</div>
+        <div class="font-semibold text-indigo-300 text-sm">কোনো অর্ডার নেই</div>
+        <div class="text-xs text-indigo-200 mt-1">নতুন অর্ডার যোগ করুন।</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- PASSWORD MODAL -->
+<div id="pwd-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden af">
+  <div class="modal-box rounded-2xl p-6 afu" style="max-width:380px;width:100%">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-base font-bold text-indigo-900">🔑 পাসওয়ার্ড পরিবর্তন</h2>
+      <button onclick="closeModal('pwd-modal')" class="w-8 h-8 rounded-lg bg-indigo-50 hover:bg-indigo-100 flex items-center justify-center text-indigo-400">✕</button>
+    </div>
+    <p class="text-xs text-indigo-400 mb-4" id="pwdModalNote"></p>
+    <div class="space-y-4">
+      <div>
+        <label class="form-label">বর্তমান পাসওয়ার্ড</label>
+        <div class="relative">
+          <input id="pwd-cur" type="password" class="glass-input w-full px-3 py-2 rounded-xl text-sm text-indigo-900 pr-9" placeholder="Current password"/>
+          <button type="button" onclick="togglePwdVis('pwd-cur',this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-indigo-300 text-xs">👁</button>
+        </div>
+      </div>
+      <div>
+        <label class="form-label">নতুন পাসওয়ার্ড</label>
+        <div class="relative">
+          <input id="pwd-new" type="password" class="glass-input w-full px-3 py-2 rounded-xl text-sm text-indigo-900 pr-9" placeholder="Min 6 characters"/>
+          <button type="button" onclick="togglePwdVis('pwd-new',this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-indigo-300 text-xs">👁</button>
+        </div>
+      </div>
+      <div>
+        <label class="form-label">নতুন পাসওয়ার্ড নিশ্চিত করুন</label>
+        <input id="pwd-cf" type="password" class="glass-input w-full px-3 py-2 rounded-xl text-sm text-indigo-900" placeholder="Confirm"/>
+      </div>
+      <p id="pwdErr" class="text-xs text-rose-500 hidden"></p>
+    </div>
+    <div class="flex gap-3 justify-end mt-5">
+      <button onclick="closeModal('pwd-modal')" class="px-5 py-2 rounded-xl text-sm font-semibold text-indigo-500 bg-indigo-50 hover:bg-indigo-100 transition">বাতিল</button>
+      <button onclick="doChangePwd()" class="glass-btn px-5 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-violet-600 shadow-lg">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT ORDER MODAL -->
+<div id="order-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden af">
+  <div class="modal-box rounded-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto p-6 afu">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-lg font-bold text-indigo-900" id="modalTitle">নতুন অর্ডার</h2>
+      <button onclick="closeModal('order-modal')" class="w-8 h-8 rounded-lg bg-indigo-50 hover:bg-indigo-100 flex items-center justify-center text-indigo-400">✕</button>
+    </div>
+    <form id="orderForm" onsubmit="handleOrderSubmit(event)">
+      <input type="hidden" id="editOrderId"/>
+      <p class="sec-title">👤 Customer তথ্য</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+        <div>
+          <label class="form-label">Customer নাম <span class="text-rose-400">*</span></label>
+          <input id="f-name" type="text" class="glass-input w-full px-3 py-2 rounded-xl text-sm text-indigo-900" required placeholder="নাম লিখুন"/>
+        </div>
+        <div>
+          <label class="form-label">ফোন নম্বর <span class="text-rose-400">*</span></label>
+          <input id="f-phone" type="tel" class="glass-input w-full px-3 py-2 rounded-xl text-sm text-indigo-900" required placeholder="01X-XXXXXXXX"/>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="form-label">ডেলিভারি ঠিকানা <span class="text-rose-400">*</span></label>
+          <textarea id="f-addr" rows="2" class="glass-input w-full px-3 py-2 rounded-xl text-sm text-indigo-900 resize-none" required placeholder="বাড়ি, রাস্তা, এলাকা, শহর…"></textarea>
+        </div>
+      </div>
+
+      <p class="sec-title">📦 পণ্য ও মূল্য তথ্য</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+        <div class="sm:col-span-2">
+          <label class="form-label">পণ্যের নাম <span class="text-rose-400">*</span></label>
+          <input id="f-product" type="text" class="glass-input w-full px-3 py-2 rounded-xl text-sm text-indigo-900" required placeholder="e.g. Wireless Earbuds Pro"/>
+        </div>
+        <div>
+          <label class="form-label">পরিমাণ (Qty) <span class="text-rose-400">*</span></label>
+          <input id="f-qty" type="number" min="1" class="glass-input w-full px-3 py-2 rounded-xl text-sm text-indigo-900" required placeholder="1"/>
+        </div>
+        <div>
+          <label class="form-label">কেনা দাম / পিস (৳) <span class="text-rose-400">*</span></label>
+          <input id="f-buy" type="number" min="0" step="0.01" class="glass-input w-full px-3 py-2 rounded-xl text-sm text-indigo-900" required placeholder="0.00"/>
+        </div>
+        <div>
+          <label class="form-label">ডেলিভারি চার্জ — মোট (৳) <span class="text-rose-400">*</span></label>
+          <input id="f-dc" type="number" min="0" step="0.01" class="glass-input w-full px-3 py-2 rounded-xl text-sm text-indigo-900" required placeholder="0.00"/>
+        </div>
+        <div>
+          <label class="form-label">বিক্রয় দাম / পিস (৳) <span class="text-rose-400">*</span></label>
+          <input id="f-sell" type="number" min="0" step="0.01" class="glass-input w-full px-3 py-2 rounded-xl text-sm text-indigo-900" required placeholder="0.00"/>
+        </div>
+
+        <!-- Live profit box -->
+        <div class="sm:col-span-2">
+          <div id="profitBox" class="hidden rounded-2xl px-4 py-3 border">
+            <p class="text-xs font-semibold text-indigo-400 mb-3 uppercase tracking-wider">📊 লাইভ লাভ হিসাব</p>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs">
+              <div class="bg-white/50 rounded-xl px-2 py-2">
+                <div class="text-indigo-400">মোট বিক্রয়</div>
+                <div class="font-bold text-indigo-800 text-sm" id="pb-sell">৳0</div>
+              </div>
+              <div class="bg-white/50 rounded-xl px-2 py-2">
+                <div class="text-indigo-400">মোট কেনা</div>
+                <div class="font-bold text-indigo-800 text-sm" id="pb-buy">৳0</div>
+              </div>
+              <div class="bg-white/50 rounded-xl px-2 py-2">
+                <div class="text-indigo-400">ডেলিভারি চার্জ</div>
+                <div class="font-bold text-indigo-800 text-sm" id="pb-dc">৳0</div>
+              </div>
+              <div class="bg-white/50 rounded-xl px-2 py-2 border-2" id="pb-box">
+                <div id="pb-label" class="text-indigo-400">মোট লাভ</div>
+                <div class="font-bold text-lg" id="pb-profit">৳0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="sec-title">📝 অতিরিক্ত তথ্য</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <div>
+          <label class="form-label">অ্যাডভান্স ডেলিভারি চার্জ পেইড</label>
+          <label class="flex items-center gap-2 cursor-pointer mt-2">
+            <input type="checkbox" id="f-advpaid" onchange="toggleAdvAmt()" class="w-4 h-4 accent-indigo-500 rounded"/>
+            <span class="text-sm text-indigo-700 font-medium">হ্যাঁ, পেইড হয়েছে</span>
+          </label>
+          <input id="f-advamt" type="number" min="0" step="0.01" placeholder="পরিমাণ (৳)" class="glass-input mt-2 px-3 py-2 rounded-xl text-sm text-indigo-900 w-full hidden"/>
+        </div>
+        <div>
+          <label class="form-label">অর্ডার নোট</label>
+          <textarea id="f-notes" rows="3" class="glass-input w-full px-3 py-2 rounded-xl text-sm text-indigo-900 resize-none" placeholder="বিশেষ নির্দেশনা…"></textarea>
+        </div>
+      </div>
+
+      <div class="flex gap-3 justify-end">
+        <button type="button" onclick="closeModal('order-modal')" class="px-5 py-2 rounded-xl text-sm font-semibold text-indigo-500 bg-indigo-50 hover:bg-indigo-100 transition">বাতিল</button>
+        <button type="submit" class="glass-btn px-6 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-violet-600 shadow-lg">
+          <span id="submitTxt">অর্ডার তৈরি করুন</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- SUPPLIER STATUS MODAL -->
+<div id="status-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden af">
+  <div class="modal-box rounded-2xl w-full max-w-sm p-6 afu">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-base font-bold text-indigo-900">অর্ডার স্ট্যাটাস</h2>
+      <button onclick="closeModal('status-modal')" class="w-8 h-8 rounded-lg bg-indigo-50 hover:bg-indigo-100 flex items-center justify-center text-indigo-400">✕</button>
+    </div>
+    <p class="text-xs text-indigo-500 mb-3">Order: <strong id="sm-id" class="text-indigo-700"></strong></p>
+    <input type="hidden" id="sm-target"/>
+    <div class="info-box mb-4 text-xs">🏭 শুধু <strong>Confirm</strong> বা <strong>Delivered</strong> করতে পারবেন।</div>
+    <div class="flex gap-3 mb-4">
+      <button onclick="supplierSetStatus('Confirmed')" class="flex-1 flex flex-col items-center gap-2 px-3 py-4 rounded-2xl border-2 border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition cursor-pointer">
+        <span class="text-2xl">✅</span><span class="text-sm font-semibold">Confirm</span>
+      </button>
+      <button onclick="supplierSetStatus('Delivered')" class="flex-1 flex flex-col items-center gap-2 px-3 py-4 rounded-2xl border-2 border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition cursor-pointer">
+        <span class="text-2xl">📬</span><span class="text-sm font-semibold">Delivered</span>
+      </button>
+    </div>
+    <button onclick="closeModal('status-modal')" class="w-full px-5 py-2 rounded-xl text-sm font-semibold text-indigo-400 bg-indigo-50 hover:bg-indigo-100 transition">বাতিল</button>
+  </div>
+</div>
+
+<!-- SUPPLIER PAYMENT RECEIVE MODAL -->
+<div id="payrec-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden af">
+  <div class="modal-box rounded-2xl w-full max-w-md p-6 afu">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-base font-bold text-indigo-900">💳 পেমেন্ট রিসিভ কনফার্ম</h2>
+      <button onclick="closeModal('payrec-modal')" class="w-8 h-8 rounded-lg bg-indigo-50 hover:bg-indigo-100 flex items-center justify-center text-indigo-400">✕</button>
+    </div>
+    <p class="text-xs text-indigo-500 mb-1">Order: <strong id="pr-id" class="text-indigo-700"></strong></p>
+    <div class="info-box mb-4 text-xs">🏭 আপনি (সাপ্লায়ার) নিজেই কনফার্ম করবেন — রিসেলার পরিবর্তন করতে পারবেন না।</div>
+    <input type="hidden" id="pr-target"/>
+    <div class="space-y-3 mb-5">
+      <div class="glass-card rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+        <div>
+          <p class="text-sm font-semibold text-indigo-800">ডেলিভারি চার্জ পেয়েছি</p>
+          <p class="text-xs text-indigo-400 mt-0.5" id="pr-dc-amt"></p>
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <span id="pr-dc-badge" class="badge"></span>
+          <button id="pr-dc-btn" onclick="supplierConfirmPayment('delivery')" class="ab bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 text-xs px-3 py-1.5">কনফার্ম</button>
+        </div>
+      </div>
+      <div class="glass-card rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+        <div>
+          <p class="text-sm font-semibold text-indigo-800">লাভের অংশ পেয়েছি</p>
+          <p class="text-xs text-indigo-400 mt-0.5" id="pr-pf-amt"></p>
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <span id="pr-pf-badge" class="badge"></span>
+          <button id="pr-pf-btn" onclick="supplierConfirmPayment('profit')" class="ab bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 text-xs px-3 py-1.5">কনফার্ম</button>
+        </div>
+      </div>
+    </div>
+    <div class="rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 text-xs text-rose-600">⚠️ একবার কনফার্ম করলে আর পরিবর্তন করা যাবে না।</div>
+    <button onclick="closeModal('payrec-modal')" class="w-full mt-4 px-5 py-2 rounded-xl text-sm font-semibold text-indigo-400 bg-indigo-50 hover:bg-indigo-100 transition">বন্ধ করুন</button>
+  </div>
+</div>
+
+<!-- SETTLE MODAL (Reseller) -->
+<div id="settle-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden af">
+  <div class="modal-box rounded-2xl p-6 afu" style="max-width:420px;width:100%">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-base font-bold text-indigo-900">💚 Settle Payment</h2>
+      <button onclick="closeModal('settle-modal')" class="w-8 h-8 rounded-lg bg-indigo-50 hover:bg-indigo-100 flex items-center justify-center text-indigo-400">✕</button>
+    </div>
+    <div id="settleContent" class="mb-5"></div>
+    <input type="hidden" id="settle-target"/>
+    <div class="flex gap-3 justify-end">
+      <button onclick="closeModal('settle-modal')" class="px-5 py-2 rounded-xl text-sm font-semibold text-indigo-500 bg-indigo-50 hover:bg-indigo-100 transition">বাতিল</button>
+      <button onclick="confirmSettle()" class="glass-btn px-6 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-600 shadow-lg">✅ Settled</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div id="delete-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden af">
+  <div class="modal-box rounded-2xl p-6 afu" style="max-width:360px;width:100%">
+    <div class="text-center mb-4">
+      <div class="w-14 h-14 rounded-full bg-rose-100 flex items-center justify-center mx-auto mb-3">
+        <svg class="w-7 h-7 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+      </div>
+      <h2 class="text-base font-bold text-indigo-900 mb-1">অর্ডার মুছবেন?</h2>
+      <p class="text-xs text-indigo-400">Order <span id="del-id" class="font-semibold text-indigo-600"></span> চিরতরে মুছে যাবে।</p>
+    </div>
+    <input type="hidden" id="del-target"/>
+    <div class="flex gap-3 justify-center">
+      <button onclick="closeModal('delete-modal')" class="px-5 py-2 rounded-xl text-sm font-semibold text-indigo-500 bg-indigo-50 hover:bg-indigo-100 transition">বাতিল</button>
+      <button onclick="confirmDelete()" class="glass-btn px-6 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-rose-500 to-pink-600 shadow-lg">মুছুন</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div id="detail-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden af">
+  <div class="modal-box rounded-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto p-6 afu">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-base font-bold text-indigo-900">অর্ডার বিস্তারিত</h2>
+      <button onclick="closeModal('detail-modal')" class="w-8 h-8 rounded-lg bg-indigo-50 hover:bg-indigo-100 flex items-center justify-center text-indigo-400">✕</button>
+    </div>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+
+<script>
+/* ══════════════════════════════════
+   KEYS & DEFAULTS
+══════════════════════════════════ */
+const SK_ORDERS='of_v5_orders', SK_CTR='of_v5_ctr', SK_PWD_R='of_v5_pwd_r', SK_PWD_S='of_v5_pwd_s';
+const DEF_R='reseller123', DEF_S='supplier123';
+
+let currentRole=null, orders=[], ctr=1;
+
+/* ── PWD ── */
+const getPwd=r=>localStorage.getItem(r==='reseller'?SK_PWD_R:SK_PWD_S)||(r==='reseller'?DEF_R:DEF_S);
+const setPwd=(r,p)=>localStorage.setItem(r==='reseller'?SK_PWD_R:SK_PWD_S,p);
+function togglePwdVis(id,btn){const el=document.getElementById(id);el.type=el.type==='password'?'text':'password';btn.textContent=el.type==='password'?'👁':'🙈';}
+
+/* ── LOGIN ── */
+let loginRole='reseller';
+function loginRoleSelect(r){
+  loginRole=r;
+  document.getElementById('loginBtnR').classList.toggle('active',r==='reseller');
+  document.getElementById('loginBtnS').classList.toggle('active',r==='supplier');
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginErr').classList.add('hidden');
+}
+function doLogin(){
+  const v=document.getElementById('loginPass').value;
+  if(v===getPwd(loginRole)){
+    currentRole=loginRole;
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('main-app').classList.remove('hidden');
+    document.getElementById('loginPass').value='';
+    document.getElementById('loginErr').classList.add('hidden');
+    initApp();
+  } else {
+    document.getElementById('loginErr').classList.remove('hidden');
+    document.getElementById('loginPass').focus();
+  }
+}
+function doLogout(){
+  currentRole=null;
+  document.getElementById('main-app').classList.add('hidden');
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('loginPass').value='';
+  loginRoleSelect('reseller');
+}
+
+/* ── CHANGE PWD ── */
+function openChangePwd(){
+  ['pwd-cur','pwd-new','pwd-cf'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('pwdErr').classList.add('hidden');
+  document.getElementById('pwdModalNote').textContent=currentRole==='reseller'?'🏪 Reseller পাসওয়ার্ড পরিবর্তন':'🏭 Supplier পাসওয়ার্ড পরিবর্তন';
+  openModal('pwd-modal');
+}
+function doChangePwd(){
+  const cur=document.getElementById('pwd-cur').value,
+        nw=document.getElementById('pwd-new').value,
+        cf=document.getElementById('pwd-cf').value,
+        err=document.getElementById('pwdErr');
+  if(cur!==getPwd(currentRole)){err.textContent='❌ বর্তমান পাসওয়ার্ড ভুল।';err.classList.remove('hidden');return;}
+  if(nw.length<6){err.textContent='❌ কমপক্ষে ৬ অক্ষর দিন।';err.classList.remove('hidden');return;}
+  if(nw!==cf){err.textContent='❌ পাসওয়ার্ড মিলছে না।';err.classList.remove('hidden');return;}
+  setPwd(currentRole,nw);err.classList.add('hidden');closeModal('pwd-modal');
+  showToast('🔑 পাসওয়ার্ড পরিবর্তন হয়েছে!','ok');
+}
+
+/* ── DATA ── */
+function loadOrders(){const r=localStorage.getItem(SK_ORDERS);orders=r?JSON.parse(r):[];ctr=parseInt(localStorage.getItem(SK_CTR)||'1');}
+function saveOrders(){localStorage.setItem(SK_ORDERS,JSON.stringify(orders));localStorage.setItem(SK_CTR,String(ctr));}
+function newId(){return`ORD-${String(ctr++).padStart(4,'0')}`;}
+
+function initApp(){
+  loadOrders();
+  applyRoleUI();
+  renderStats();
+  renderTable();
+}
+function applyRoleUI(){
+  const isR=currentRole==='reseller';
+  document.getElementById('addOrderBtn').style.display=isR?'':'none';
+  document.getElementById('earningsPanel').style.display=isR?'':'none';
+  document.getElementById('supplierNote').classList.toggle('hidden',isR);
+  document.getElementById('payFilter').style.display=isR?'':'none';
+  document.getElementById('tableTitle').textContent=isR?'সমস্ত অর্ডার — Reseller':'সমস্ত অর্ডার — Supplier';
+  document.getElementById('headerRoleTag').textContent=isR?'🏪 Reseller Panel':'🏭 Supplier Panel';
+  document.getElementById('headerRoleBadge').textContent=isR?'🏪 Reseller':'🏭 Supplier';
+  document.getElementById('headerRoleBadge').className='badge '+(isR?'b-confirmed':'b-earned');
+}
+
+/* ── STATS ── */
+function calcProfit(o){return(o.sellPrice-o.buyPrice)*o.qty-(o.deliveryCharge||0);}
+function renderStats(){
+  const c={
+    total:orders.length,
+    pending:orders.filter(o=>o.status==='Pending').length,
+    confirmed:orders.filter(o=>o.status==='Confirmed').length,
+    delivered:orders.filter(o=>o.status==='Delivered').length,
+    returned:orders.filter(o=>['Returned','Rejected'].includes(o.status)).length,
+    earning:orders.filter(o=>o.paymentStatus==='earned').length,
+    settled:orders.filter(o=>o.paymentStatus==='settled').length,
+  };
+  const defs=currentRole==='reseller'
+    ?[{k:'total',l:'মোট',i:'📦',cls:'sa-t'},{k:'pending',l:'Pending',i:'⏳',cls:'sa-p'},{k:'confirmed',l:'Confirmed',i:'✅',cls:'sa-c'},{k:'delivered',l:'Delivered',i:'📬',cls:'sa-d'},{k:'returned',l:'Returned',i:'↩️',cls:'sa-r'},{k:'earning',l:'Earning',i:'💰',cls:'sa-e'},{k:'settled',l:'Settled',i:'💚',cls:'sa-s'}]
+    :[{k:'total',l:'মোট',i:'📦',cls:'sa-t'},{k:'pending',l:'Pending',i:'⏳',cls:'sa-p'},{k:'confirmed',l:'Confirmed',i:'✅',cls:'sa-c'},{k:'delivered',l:'Delivered',i:'📬',cls:'sa-d'},{k:'returned',l:'Returned',i:'↩️',cls:'sa-r'}];
+  document.getElementById('statsGrid').innerHTML=defs.map((d,i)=>`<div class="glass-card rounded-2xl px-4 py-4 afu ${d.cls}" style="animation-delay:${i*.05}s"><div class="flex items-center justify-between mb-2"><span class="text-2xl">${d.i}</span><span class="text-2xl text-indigo-900" style="font-weight:800">${c[d.k]}</span></div><p class="text-xs text-indigo-600" style="font-weight:600">${d.l}</p></div>`).join('');
+  const earned=orders.filter(o=>o.paymentStatus==='earned').reduce((s,o)=>s+(o.profit||0),0);
+  const settled=orders.filter(o=>o.paymentStatus==='settled').reduce((s,o)=>s+(o.profit||0),0);
+  document.getElementById('pendingEarnings').textContent=fmt(earned);
+  document.getElementById('settledEarnings').textContent=fmt(settled);
+  document.getElementById('totalEarned').textContent=fmt(earned+settled);
+}
+
+/* ── TABLE ── */
+function getFiltered(){
+  const q=(document.getElementById('searchInput').value||'').trim().toLowerCase();
+  const sf=document.getElementById('statusFilter').value;
+  const pf=document.getElementById('payFilter').value;
+  return orders.filter(o=>{
+    const mq=!q||o.id.toLowerCase().includes(q)||(o.phone||'').toLowerCase().includes(q)||(o.custName||'').toLowerCase().includes(q);
+    return mq&&(!sf||o.status===sf)&&(!pf||o.paymentStatus===pf);
+  }).sort((a,b)=>b.createdAt-a.createdAt);
+}
+function sBadge(s){const m={Pending:'b-pending',Confirmed:'b-confirmed',Delivered:'b-delivered',Returned:'b-returned',Rejected:'b-rejected'};const i={Pending:'⏳',Confirmed:'✅',Delivered:'📬',Returned:'↩️',Rejected:'❌'};return`<span class="badge ${m[s]||'b-pending'}">${i[s]||''}${s}</span>`;}
+function pBadge(ps){if(ps==='earned')return`<span class="badge b-earned">⏳ Pending</span>`;if(ps==='settled')return`<span class="badge b-settled">✅ Settled</span>`;return`<span class="badge b-none">— N/A</span>`;}
+function rcvBadge(v){return v?`<span class="badge b-rcvd">✅ পেয়েছি</span>`:`<span class="badge b-not-rcvd">❌ পাইনি</span>`;}
+function fmt(n){return'৳'+Number(n||0).toLocaleString('en-BD',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fd(ts){return ts?new Date(ts).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function renderTable(){
+  const data=getFiltered();
+  const thead=document.getElementById('tableHead'),tbody=document.getElementById('tableBody'),empty=document.getElementById('emptyState');
+  document.getElementById('resultCount').textContent=`${data.length}/${orders.length} অর্ডার`;
+  const isR=currentRole==='reseller';
+  const cols=isR?['Order ID','Customer','পণ্য','Qty','মোট বিক্রয়','লাভ','Advance','স্ট্যাটাস','Payment','Actions']:['Order ID','Customer','পণ্য','Qty','Advance','Order স্ট্যাটাস','DC রিসিভ','লাভ রিসিভ','Actions'];
+  thead.innerHTML=cols.map(c=>`<th>${c}</th>`).join('');
+  if(!data.length){tbody.innerHTML='';empty.classList.remove('hidden');return;}
+  empty.classList.add('hidden');
+  tbody.innerHTML=data.map(o=>{
+    const profit=calcProfit(o),totalSell=o.sellPrice*o.qty;
+    if(isR){
+      const sb=!o.advPaid?`<button class="ab bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100" onclick="markAdvPaid('${o.id}')">💵 Adv</button>`:'';
+      const stb=o.paymentStatus==='earned'?`<button class="ab bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100" onclick="openSettleModal('${o.id}')">💚 Settle</button>`:'';
+      return`<tr>
+        <td><div class="font-bold text-indigo-700 text-xs">${o.id}</div><div class="text-indigo-300 text-xs">${fd(o.createdAt)}</div></td>
+        <td><div class="font-semibold text-indigo-900">${esc(o.custName)}</div><div class="text-indigo-500 text-xs">${esc(o.phone)}</div></td>
+        <td><div class="font-medium text-indigo-800">${esc(o.product)}</div><div class="text-indigo-400 text-xs">${esc((o.address||'').substring(0,30))}…</div></td>
+        <td class="text-center font-semibold text-indigo-700">${o.qty}</td>
+        <td class="font-semibold text-emerald-700">${fmt(totalSell)}</td>
+        <td><div class="font-bold ${profit>=0?'text-emerald-600':'text-rose-600'}">${profit>=0?'📈':'📉'} ${fmt(profit)}</div><div class="text-xs text-indigo-400">DC: ${fmt(o.deliveryCharge||0)}</div></td>
+        <td>${o.advPaid?`<span class="badge b-adv-paid">✅ Paid</span>${o.advAmount?`<div class="text-xs text-emerald-600">${fmt(o.advAmount)}</div>`:''}`:`<span class="badge b-adv-unpaid">⚠️ Unpaid</span>`}</td>
+        <td>${sBadge(o.status)}</td>
+        <td>${pBadge(o.paymentStatus)}${o.paymentStatus!=='none'?`<div class="text-xs text-indigo-400 mt-1">${fmt(o.profit||0)}</div>`:''}</td>
+        <td><div class="flex flex-wrap gap-1">
+          <button class="ab bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100" onclick="viewOrder('${o.id}')">👁</button>
+          <button class="ab bg-violet-50 text-violet-600 border-violet-200 hover:bg-violet-100" onclick="editOrder('${o.id}')">✏️</button>
+          ${sb}${stb}
+          <button class="ab bg-rose-50 text-rose-500 border-rose-200 hover:bg-rose-100" onclick="deleteOrder('${o.id}')">🗑</button>
+        </div></td>
+      </tr>`;
+    } else {
+      const canAct=['Pending','Confirmed'].includes(o.status);
+      const ab=canAct?`<button class="ab bg-violet-50 text-violet-600 border-violet-200 hover:bg-violet-100" onclick="openStatusModal('${o.id}')">🔄 Update</button>`:'';
+      const pb=o.status==='Delivered'?`<button class="ab bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100" onclick="openPayRecModal('${o.id}')">💳 রিসিভ</button>`:'';
+      return`<tr>
+        <td><div class="font-bold text-indigo-700 text-xs">${o.id}</div><div class="text-indigo-300 text-xs">${fd(o.createdAt)}</div></td>
+        <td><div class="font-semibold text-indigo-900">${esc(o.custName)}</div><div class="text-indigo-500 text-xs">${esc(o.phone)}</div><div class="text-indigo-400 text-xs">${esc((o.address||'').substring(0,38))}</div></td>
+        <td><div class="font-medium text-indigo-800">${esc(o.product)}</div>${o.notes?`<div class="text-xs text-amber-600 italic">"${esc((o.notes||'').substring(0,30))}"</div>`:''}</td>
+        <td class="text-center font-semibold text-indigo-700">${o.qty}</td>
+        <td>${o.advPaid?`<span class="badge b-adv-paid">✅ Paid</span>${o.advAmount?`<div class="text-xs text-emerald-600">${fmt(o.advAmount)}</div>`:''}`:`<span class="badge b-adv-unpaid">⚠️ Unpaid</span>`}</td>
+        <td>${sBadge(o.status)}</td>
+        <td>${rcvBadge(o.supplierDCReceived||false)}</td>
+        <td>${rcvBadge(o.supplierProfitReceived||false)}</td>
+        <td><div class="flex flex-wrap gap-1">
+          <button class="ab bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100" onclick="viewOrder('${o.id}')">👁</button>
+          ${ab}${pb}
+        </div></td>
+      </tr>`;
+    }
+  }).join('');
+}
+function clearFilters(){['searchInput','statusFilter','payFilter'].forEach(id=>document.getElementById(id).value='');renderTable();}
+
+/* ── MODALS ── */
+function openModal(id){document.getElementById(id).classList.remove('hidden');document.body.style.overflow='hidden';}
+function closeModal(id){document.getElementById(id).classList.add('hidden');document.body.style.overflow='';}
+['order-modal','status-modal','delete-modal','detail-modal','settle-modal','payrec-modal','pwd-modal'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeModal(id);});
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')['order-modal','status-modal','delete-modal','detail-modal','settle-modal','payrec-modal','pwd-modal'].forEach(closeModal);});
+
+/* ── ADD/EDIT ORDER ── */
+function openAddModal(){
+  resetForm();
+  document.getElementById('modalTitle').textContent='নতুন অর্ডার';
+  document.getElementById('submitTxt').textContent='অর্ডার তৈরি করুন';
+  document.getElementById('editOrderId').value='';
+  openModal('order-modal');
+}
+function editOrder(id){
+  const o=orders.find(x=>x.id===id);if(!o)return;
+  resetForm();
+  document.getElementById('modalTitle').textContent='অর্ডার সম্পাদনা';
+  document.getElementById('submitTxt').textContent='পরিবর্তন সংরক্ষণ';
+  document.getElementById('editOrderId').value=id;
+  document.getElementById('f-name').value=o.custName||'';
+  document.getElementById('f-phone').value=o.phone||'';
+  document.getElementById('f-addr').value=o.address||'';
+  document.getElementById('f-product').value=o.product||'';
+  document.getElementById('f-qty').value=o.qty||1;
+  document.getElementById('f-buy').value=o.buyPrice||0;
+  document.getElementById('f-dc').value=o.deliveryCharge||0;
+  document.getElementById('f-sell').value=o.sellPrice||0;
+  document.getElementById('f-advpaid').checked=o.advPaid||false;
+  document.getElementById('f-notes').value=o.notes||'';
+  if(o.advPaid){document.getElementById('f-advamt').classList.remove('hidden');document.getElementById('f-advamt').value=o.advAmount||0;}
+  updateProfitBox();
+  openModal('order-modal');
+}
+function resetForm(){document.getElementById('orderForm').reset();document.getElementById('f-advamt').classList.add('hidden');document.getElementById('profitBox').classList.add('hidden');}
+function toggleAdvAmt(){document.getElementById('f-advamt').classList.toggle('hidden',!document.getElementById('f-advpaid').checked);}
+function updateProfitBox(){
+  const buy=parseFloat(document.getElementById('f-buy').value)||0;
+  const dc=parseFloat(document.getElementById('f-dc').value)||0;
+  const sell=parseFloat(document.getElementById('f-sell').value)||0;
+  const qty=parseInt(document.getElementById('f-qty').value)||1;
+  const box=document.getElementById('profitBox');
+  if(buy>0||sell>0){
+    const profit=(sell-buy)*qty-dc;
+    document.getElementById('pb-sell').textContent=fmt(sell*qty);
+    document.getElementById('pb-buy').textContent=fmt(buy*qty);
+    document.getElementById('pb-dc').textContent=fmt(dc);
+    document.getElementById('pb-profit').textContent=fmt(profit);
+    document.getElementById('pb-label').textContent=profit>=0?'মোট লাভ':'মোট ক্ষতি';
+    document.getElementById('pb-box').className='bg-white/50 rounded-xl px-2 py-2 border-2 '+(profit>=0?'border-emerald-300':'border-rose-300');
+    document.getElementById('pb-profit').className='font-bold text-lg '+(profit>=0?'text-emerald-600':'text-rose-600');
+    box.className=box.className.replace(/bg-\S+|border-\S+/g,'');
+    box.classList.remove('hidden');
+    box.classList.add(profit>=0?'bg-emerald-50':'bg-rose-50',profit>=0?'border-emerald-200':'border-rose-200','rounded-2xl','px-4','py-3','border');
+  } else box.classList.add('hidden');
+}
+['f-buy','f-dc','f-sell','f-qty'].forEach(id=>document.getElementById(id).addEventListener('input',updateProfitBox));
+
+function handleOrderSubmit(e){
+  e.preventDefault();
+  const eid=document.getElementById('editOrderId').value;
+  const advPaid=document.getElementById('f-advpaid').checked;
+  const buy=parseFloat(document.getElementById('f-buy').value)||0;
+  const dc=parseFloat(document.getElementById('f-dc').value)||0;
+  const sell=parseFloat(document.getElementById('f-sell').value)||0;
+  const qty=parseInt(document.getElementById('f-qty').value)||1;
+  const data={
+    custName:document.getElementById('f-name').value.trim(),
+    phone:document.getElementById('f-phone').value.trim(),
+    address:document.getElementById('f-addr').value.trim(),
+    product:document.getElementById('f-product').value.trim(),
+    qty,buyPrice:buy,deliveryCharge:dc,sellPrice:sell,
+    advPaid,advAmount:advPaid?(parseFloat(document.getElementById('f-advamt').value)||0):0,
+    notes:document.getElementById('f-notes').value.trim(),
+  };
+  if(eid){
+    const idx=orders.findIndex(o=>o.id===eid);
+    if(idx>-1){orders[idx]={...orders[idx],...data};showToast(`✏️ ${eid} আপডেট হয়েছে`,'inf');}
+  } else {
+    orders.push({id:newId(),...data,status:'Pending',paymentStatus:'none',profit:0,supplierDCReceived:false,supplierProfitReceived:false,createdAt:Date.now(),deliveredAt:null});
+    showToast('✅ নতুন অর্ডার তৈরি হয়েছে!','ok');
+  }
+  saveOrders();closeModal('order-modal');renderStats();renderTable();
+}
+
+/* ── MARK ADV PAID ── */
+function markAdvPaid(id){
+  const o=orders.find(x=>x.id===id);if(!o)return;
+  if(o.advPaid){showToast('ইতিমধ্যে পেইড!','wrn');return;}
+  o.advPaid=true;saveOrders();renderStats();renderTable();showToast(`💵 ${id} Advance Paid`,'ok');
+}
+
+/* ── SUPPLIER STATUS ── */
+function openStatusModal(id){
+  const o=orders.find(x=>x.id===id);if(!o)return;
+  if(!['Pending','Confirmed'].includes(o.status)){showToast(`⚠️ Already ${o.status}`,'wrn');return;}
+  document.getElementById('sm-target').value=id;
+  document.getElementById('sm-id').textContent=id;
+  openModal('status-modal');
+}
+function supplierSetStatus(ns){
+  const id=document.getElementById('sm-target').value;
+  const o=orders.find(x=>x.id===id);if(!o)return;
+  if(ns==='Confirmed'&&o.status==='Confirmed'){showToast('ইতিমধ্যে Confirmed!','wrn');return;}
+  const prev=o.status;o.status=ns;
+  if(ns==='Delivered'){
+    const p=calcProfit(o);
+    o.profit=p;o.paymentStatus='earned';o.deliveredAt=Date.now();
+    showToast(`📬 ${id} Delivered! ${fmt(p)} Earnings-এ যোগ 💰`,'ok');
+  } else showToast(`✅ ${id}: ${prev} → ${ns}`,'inf');
+  saveOrders();closeModal('status-modal');renderStats();renderTable();
+}
+
+/* ── SUPPLIER PAYMENT CONFIRM ── */
+function openPayRecModal(id){
+  const o=orders.find(x=>x.id===id);if(!o)return;
+  document.getElementById('pr-target').value=id;
+  document.getElementById('pr-id').textContent=id;
+  document.getElementById('pr-dc-amt').textContent=`ডেলিভারি চার্জ: ${fmt(o.deliveryCharge||0)}`;
+  const dcB=document.getElementById('pr-dc-badge'),dcBtn=document.getElementById('pr-dc-btn');
+  dcB.className='badge '+(o.supplierDCReceived?'b-rcvd':'b-not-rcvd');dcB.textContent=o.supplierDCReceived?'✅ পেয়েছি':'❌ পাইনি';dcBtn.style.display=o.supplierDCReceived?'none':'';
+  document.getElementById('pr-pf-amt').textContent=`লাভের অংশ: ${fmt(o.profit||0)}`;
+  const pfB=document.getElementById('pr-pf-badge'),pfBtn=document.getElementById('pr-pf-btn');
+  pfB.className='badge '+(o.supplierProfitReceived?'b-rcvd':'b-not-rcvd');pfB.textContent=o.supplierProfitReceived?'✅ পেয়েছি':'❌ পাইনি';pfBtn.style.display=o.supplierProfitReceived?'none':'';
+  openModal('payrec-modal');
+}
+function supplierConfirmPayment(type){
+  const id=document.getElementById('pr-target').value;
+  const o=orders.find(x=>x.id===id);if(!o)return;
+  if(type==='delivery'){o.supplierDCReceived=true;showToast(`✅ ${id}: ডেলিভারি চার্জ রিসিভ কনফার্ম`,'ok');}
+  else{o.supplierProfitReceived=true;showToast(`✅ ${id}: লাভের অংশ রিসিভ কনফার্ম`,'ok');}
+  saveOrders();openPayRecModal(id);renderTable();
+}
+
+/* ── SETTLE ── */
+function openSettleModal(id){
+  const o=orders.find(x=>x.id===id);if(!o)return;
+  document.getElementById('settle-target').value=id;
+  document.getElementById('settleContent').innerHTML=`<div class="space-y-2">
+    <div class="glass-card rounded-xl px-4 py-3 flex justify-between"><span class="text-sm text-indigo-600">Order</span><span class="font-bold text-indigo-800">${o.id}</span></div>
+    <div class="glass-card rounded-xl px-4 py-3 flex justify-between"><span class="text-sm text-indigo-600">পণ্য</span><span class="font-semibold text-indigo-800 text-sm">${esc(o.product)} ×${o.qty}</span></div>
+    <div class="glass-card rounded-xl px-4 py-3 flex justify-between"><span class="text-sm text-indigo-600">মোট বিক্রয়</span><span class="font-semibold text-emerald-700">${fmt(o.sellPrice*o.qty)}</span></div>
+    <div class="glass-card rounded-xl px-4 py-3 flex justify-between"><span class="text-sm text-indigo-600">ডেলিভারি চার্জ</span><span class="font-semibold text-indigo-700">${fmt(o.deliveryCharge||0)}</span></div>
+    <div class="glass-card rounded-xl px-4 py-3 flex justify-between"><span class="text-sm text-indigo-600">লাভ</span><span class="font-bold text-emerald-700 text-lg">${fmt(o.profit||0)}</span></div>
+    <div class="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-xs text-emerald-700">✅ Settled করলে Pending থেকে Settled-এ যাবে।</div>
+  </div>`;
+  openModal('settle-modal');
+}
+function confirmSettle(){
+  const id=document.getElementById('settle-target').value;
+  const o=orders.find(x=>x.id===id);if(!o)return;
+  o.paymentStatus='settled';saveOrders();closeModal('settle-modal');renderStats();renderTable();
+  showToast(`💚 ${id} Settled! ${fmt(o.profit||0)}`,'ok');
+}
+
+/* ── DELETE ── */
+function deleteOrder(id){document.getElementById('del-target').value=id;document.getElementById('del-id').textContent=id;openModal('delete-modal');}
+function confirmDelete(){const id=document.getElementById('del-target').value;orders=orders.filter(o=>o.id!==id);saveOrders();closeModal('delete-modal');renderStats();renderTable();showToast(`🗑️ ${id} মুছে গেছে`,'err');}
+
+/* ── VIEW ── */
+function viewOrder(id){
+  const o=orders.find(x=>x.id===id);if(!o)return;
+  const profit=calcProfit(o);
+  document.getElementById('detailContent').innerHTML=`<div class="space-y-4">
+    <div class="flex items-center justify-between flex-wrap gap-2">
+      <span class="text-2xl text-indigo-800" style="font-weight:800">${o.id}</span>
+      <div class="flex gap-2 flex-wrap">${sBadge(o.status)} ${pBadge(o.paymentStatus)}</div>
+    </div>
+    <div class="glass-card rounded-xl p-4">
+      <p class="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2">👤 Customer</p>
+      <div class="grid grid-cols-2 gap-2 text-sm">
+        <div><div class="text-indigo-400 text-xs">নাম</div><div class="font-semibold text-indigo-900">${esc(o.custName)}</div></div>
+        <div><div class="text-indigo-400 text-xs">ফোন</div><div class="font-semibold text-indigo-900">${esc(o.phone)}</div></div>
+        <div class="col-span-2"><div class="text-indigo-400 text-xs">ঠিকানা</div><div class="font-semibold text-indigo-900">${esc(o.address)}</div></div>
+      </div>
+    </div>
+    <div class="glass-card rounded-xl p-4">
+      <p class="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2">📦 পণ্য ও মূল্য হিসাব</p>
+      <div class="grid grid-cols-2 gap-2 text-sm">
+        <div class="col-span-2"><div class="text-indigo-400 text-xs">পণ্য</div><div class="font-semibold text-indigo-900">${esc(o.product)}</div></div>
+        <div><div class="text-indigo-400 text-xs">পরিমাণ</div><div class="font-bold">${o.qty}</div></div>
+        <div><div class="text-indigo-400 text-xs">কেনা দাম/পিস</div><div class="font-semibold text-indigo-700">${fmt(o.buyPrice)}</div></div>
+        <div><div class="text-indigo-400 text-xs">বিক্রয় দাম/পিস</div><div class="font-semibold text-emerald-700">${fmt(o.sellPrice)}</div></div>
+        <div><div class="text-indigo-400 text-xs">ডেলিভারি চার্জ</div><div class="font-semibold text-indigo-700">${fmt(o.deliveryCharge||0)}</div></div>
+        <div><div class="text-indigo-400 text-xs">মোট বিক্রয়</div><div class="font-semibold text-emerald-700">${fmt(o.sellPrice*o.qty)}</div></div>
+        <div class="col-span-2"><div class="text-indigo-400 text-xs">মোট লাভ = (বিক্রয় - কেনা) × Qty - DC</div><div class="font-bold text-xl ${profit>=0?'text-emerald-600':'text-rose-600'}">${fmt(profit)} ${profit>=0?'📈':'📉'}</div></div>
+      </div>
+    </div>
+    <div class="glass-card rounded-xl p-4">
+      <p class="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2">💳 পেমেন্ট স্ট্যাটাস</p>
+      <div class="space-y-2 text-sm">
+        <div class="flex items-center justify-between"><span class="text-indigo-500">Advance</span> ${o.advPaid?`<span class="badge b-adv-paid">✅ Paid ${o.advAmount?fmt(o.advAmount):''}</span>`:`<span class="badge b-adv-unpaid">⚠️ Unpaid</span>`}</div>
+        <div class="flex items-center justify-between"><span class="text-indigo-500">Earnings</span> ${pBadge(o.paymentStatus)}</div>
+        <div class="flex items-center justify-between"><span class="text-indigo-500">DC রিসিভ (সাপ্লায়ার)</span> ${rcvBadge(o.supplierDCReceived||false)}</div>
+        <div class="flex items-center justify-between"><span class="text-indigo-500">লাভ রিসিভ (সাপ্লায়ার)</span> ${rcvBadge(o.supplierProfitReceived||false)}</div>
+      </div>
+    </div>
+    ${o.notes?`<div class="glass-card rounded-xl px-4 py-3 text-sm text-indigo-600 italic">"${esc(o.notes)}"</div>`:''}
+    <div class="text-xs text-indigo-300 text-right">তৈরি: ${fd(o.createdAt)}${o.deliveredAt?' | Delivered: '+fd(o.deliveredAt):''}</div>
+  </div>`;
+  openModal('detail-modal');
+}
+
+/* ── TOAST ── */
+function showToast(msg,type='inf'){
+  const map={ok:'t-ok',err:'t-err',inf:'t-inf',wrn:'t-wrn'};
+  const c=document.getElementById('toast-c');
+  const el=document.createElement('div');
+  el.className=`toast ${map[type]||'t-inf'}`;el.textContent=msg;c.appendChild(el);
+  setTimeout(()=>{el.style.cssText='opacity:0;transform:translateY(8px);transition:all .3s';setTimeout(()=>el.remove(),350);},3800);
+}
+</script>
+</body>
+</html>
